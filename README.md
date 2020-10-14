@@ -27,6 +27,18 @@ also the eccentricity mapping: you would need to generate the background
 pictures using the `eccen.m` from Sam Schwarzkopf and save each frame as an
 image.
 
+## Downloading
+
+The zip files can get a bit big so they are store on [Git LFS](https://git-lfs.github.com/).
+
+So make sure you have Git and Git LFS set up.
+
+Then running this should download everything:
+
+```
+git clone https://github.com/Remi-Gau/presentation_retinotoppy.git
+```
+
 ## Other Presentation scripts for retinotopy
 
 Past me had looked for other scripts for retinotopic mapping:
