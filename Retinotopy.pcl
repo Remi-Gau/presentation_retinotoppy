@@ -46,9 +46,9 @@ term.print("\n");
 	
 # Set name for logfile for this subject and run
 string LogFileName = logfile_directory;
-LogFileName.append("Logfile_Subject_");
+LogFileName.append("Logfile_sub-");
 LogFileName.append(string(SubjectNumber));
-LogFileName.append("_Run_");
+LogFileName.append("_run-");
 LogFileName.append(string(RunNumber));
 LogFileName.append("_");
 if ClockWise == 1 then
