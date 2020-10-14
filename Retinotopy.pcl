@@ -1,0 +1,200 @@
+# --------------------------------------------------- #
+#                    PCL VARIABLES                    #
+# --------------------------------------------------- #
+preset int SubjectNumber;
+preset int RunNumber;
+preset int ClockWise;
+
+string DATE = date_time( "yyyy_mm_dd_hhnn" );
+
+int NbCycle = 8;
+double SecPerCycle = 55.0;
+
+# DISPLAY
+double RefreshRate = 60.0;
+
+#Compute the number of pixel per degree
+double MonitorWidth = 21.5;
+double ViewDist = 30.0;
+double MaxFOV = 48.0;  #2.0 * 180.0 * arctan(MonitorWidth/2.0/ViewDist)/ Pi;
+double Win_H = 768.0 ; 
+double Win_W = 1024.0 ; 
+double PPD = Win_W/MaxFOV;
+
+
+# Visual
+double Target_Duration = 200.0;
+int Target_Duration_Frames = int(Target_Duration*RefreshRate/1000.0);
+double ProbaTarget = 0.00125;
+
+double DegPerRefresh = 360.0/SecPerCycle/RefreshRate;
+
+int SwithCheckerboard = 8;
+
+double CheckerboardDegRes = 2.0; 
+
+double AppertureWidth = 70.0;
+
+# Change directory where to save log files to and to read trial list from
+string SubjectDirectory = "\Subject_";
+SubjectDirectory.append(string(SubjectNumber));
+SubjectDirectory.append("\\");
+logfile_directory.append(SubjectDirectory);
+
+term.print(logfile_directory);
+term.print("\n");
+	
+# Set name for logfile for this subject and run
+string LogFileName = logfile_directory;
+LogFileName.append("Logfile_Subject_");
+LogFileName.append(string(SubjectNumber));
+LogFileName.append("_Run_");
+LogFileName.append(string(RunNumber));
+LogFileName.append("_");
+if ClockWise == 1 then
+	LogFileName.append("+");
+else
+	LogFileName.append("-");
+end;
+LogFileName.append("_");
+LogFileName.append(DATE);
+LogFileName.append(".txt");
+logfile.set_filename(LogFileName);
+	
+term.print(LogFileName);
+term.print("\n");
+
+
+# ------------------------------------------------------ #
+#					           START									#
+# ------------------------------------------------------ #
+Start_Trial.present();
+
+Instruction_Trial.present();
+
+loop
+	
+	bool Start = true;
+	
+	bool IsNewCycle = true;
+	int iCycle = 1;
+	
+	int iRefresh = 1;
+	int iFrame = 1;
+	
+	int ImgToPresent;
+	double Deg;
+	
+	bool Target = false;
+	double PosTarDeg = 0.0;
+	double PosTarRad = 0.0;
+	double xTarg = 0.0;
+	double yTarg = 0.0;
+	int TargetFrame = 0;
+	
+	
+until iCycle > NbCycle
+
+begin
+	
+	if Start == true then
+		if ClockWise == 1 then
+			Deg=0.0;
+			ImgToPresent = int(round(Deg/CheckerboardDegRes, 0))+1;
+		elseif ClockWise == 0 then
+			Deg=359.0;
+			ImgToPresent = int(round(Deg/CheckerboardDegRes, 0));
+		end;
+		Start = false;
+	end;
+	
+	if ClockWise == 1 && ImgToPresent>CHECKERBOARD2.count() then
+		Deg=0.0;
+		iCycle = iCycle + 1;
+		IsNewCycle = true;
+		ImgToPresent = int(round(Deg/CheckerboardDegRes, 0))+1;
+	elseif ClockWise == 0 && ImgToPresent<1 then
+		Deg=359.0;
+		iCycle = iCycle + 1;
+		IsNewCycle = true;
+		ImgToPresent = int(round(Deg/CheckerboardDegRes, 0));
+	end;
+	
+	if iRefresh == SwithCheckerboard then
+		
+		iRefresh = 0;
+		
+		if iFrame == 1 then
+			iFrame = 2;
+		else
+			iFrame = 1;
+		end;
+		
+	end;
+	
+	if Target == false then
+		
+		Target = random() < ProbaTarget;
+		
+		if iFrame == 1 then
+			Checkerboard.set_part( 1, CHECKERBOARD1[ImgToPresent]);
+		else
+			Checkerboard.set_part( 1, CHECKERBOARD2[ImgToPresent]);
+		end;
+		
+		if IsNewCycle == true then
+			NewCycle.present();
+			IsNewCycle = false;
+		else
+			Checkerboard.present();
+		end
+		
+	else
+		
+		if iFrame == 1 then
+			TargetEllipse.set_part( 1, CHECKERBOARD1[ImgToPresent]);
+		else
+			TargetEllipse.set_part( 1, CHECKERBOARD2[ImgToPresent]);
+		end;
+		
+		if TargetFrame==1 then
+			
+			PosTarRad = random() * Win_H / 2.0;
+			PosTarDeg = Deg + random()* AppertureWidth;
+			
+			xTarg = PosTarRad * sin(PosTarDeg*6.2830/360.0);
+			yTarg = PosTarRad * cos(PosTarDeg*6.2830/360.0);
+			
+			TargetEllipse.set_part_x(3, xTarg);
+			TargetEllipse.set_part_y(3, yTarg);
+			
+			Visual_Target.present();
+			
+		else
+			
+			TargetEllipse.present();
+			
+		end;
+		
+		TargetFrame = TargetFrame + 1;
+		
+		if TargetFrame > Target_Duration_Frames then
+			Target = false;
+			TargetFrame = 1;
+		end;
+		
+	end;
+	
+	iRefresh = iRefresh + 1;
+	
+	if ClockWise == 1 then
+		Deg = Deg + DegPerRefresh;
+		ImgToPresent = int(round(Deg/CheckerboardDegRes, 0))+1;
+	elseif ClockWise == 0 then
+		Deg = Deg - DegPerRefresh;
+		ImgToPresent = int(round(Deg/CheckerboardDegRes, 0));
+	end;
+	
+end;
+
+Final_Fixation.present();
